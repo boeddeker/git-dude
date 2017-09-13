@@ -7,7 +7,13 @@
 #
 # Distributed under the GNU General Public License, version 3.0.
 
+# Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
+exec > >(tee -i git-dude.log)
+
 set -e
+
+#http://askubuntu.com/a/476705
+perl -lpe 's/\0/ /g' /proc/$(xdotool getwindowpid $(xdotool getactivewindow))/cmdline | grep guake && guake -r $(basename $0) && trap 'guake -r "$(basename $0) EXIT"' EXIT
 
 interval=$(git config dude.interval || true)
 interval=${interval:-60}
@@ -18,7 +24,7 @@ export LC_ALL=C # make sure git talks english
 if [[ $(git config dude.notify-command) ]]; then
   notify_cmd=$(git config dude.notify-command)
 elif [ $(which notify-send 2>/dev/null) ]; then
-  notify_cmd='notify-send -i "$ICON_PATH" "$TITLE" "$DESCRIPTION"'
+  notify_cmd='notify-send -i "$ICON_PATH" "$TITLE" "$DESCRIPTION"; ntfy -t "$TITLE" send "$DESCRIPTION" | cat'
 elif [ $(which terminal-notifier 2>/dev/null) ]; then
   notify_cmd='terminal-notifier -title "$TITLE" -message "$DESCRIPTION"'
 elif [ $(which growlnotify 2>/dev/null) ]; then
@@ -49,6 +55,7 @@ function dudenotify() {
 [[ -d "$1" ]] && cd $1
 
 while true; do
+  echo -en " \t\t\t\t\t";date "+%x %X"; echo -ne "\e[1A";
   for dir_name in *; do
     if [[ -d "$dir_name" && $(cd "$dir_name"; git rev-parse --git-dir 2>/dev/null) ]]; then
 
@@ -57,6 +64,7 @@ while true; do
       fi
 
       repo_name=$(basename "$dir_name" .git)
+      echo -en " \033[K\t\t\t$(date "+%x %X") $repo_name\r"; # echo -ne "\e[1A";
       cd "$dir_name"
 
       changes=$(git fetch 2>&1 | grep -F -- '->' | sed 's/^ [+*=!-] //')
@@ -89,5 +97,6 @@ while true; do
     fi
   done
 
+  echo -en " \033[K\t\t\t$(date "+%x %X")\r"; # echo -ne "\e[1A";
   sleep $interval
 done
