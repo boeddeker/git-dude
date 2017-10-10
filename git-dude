@@ -12,8 +12,8 @@ exec > >(tee -i git-dude.log)
 
 set -e
 
-#http://askubuntu.com/a/476705
-perl -lpe 's/\0/ /g' /proc/$(xdotool getwindowpid $(xdotool getactivewindow))/cmdline | grep guake && guake -r $(basename $0) && trap 'guake -r "$(basename $0) EXIT"' EXIT
+# http://askubuntu.com/a/476705
+# perl -lpe 's/\0/ /g' /proc/$(xdotool getwindowpid $(xdotool getactivewindow))/cmdline | grep guake && guake -r $(basename $0) && trap 'guake -r "$(basename $0) EXIT"' EXIT
 
 interval=$(git config dude.interval || true)
 interval=${interval:-60}
